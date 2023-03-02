@@ -277,13 +277,18 @@ class Entry(pyproteins.container.Core.Container):
         self.STRING_ID = None
         e = self._xmlFind("./dbReference", type="STRING")
         if not e is None:
-            self.STRING_ID = self._xmlAttrib('id', elem=e)
-        
+            self.STRING_ID = self._xmlAttrib('id', elem=e) 
+
         self.parseAC()
         self.parseLineage()
         self.parseKW()
         self.parseGO()
         self.parseSequence()
+        
+        self.db_references = {
+           'Ensembl': self.parseEnsembl(),
+           'GeneID': self.parseGeneID(),
+        }
 
 
 # Following oarsing stages are disabled since we got rid of bs4
@@ -425,17 +430,19 @@ class Entry(pyproteins.container.Core.Container):
     def parseEnsembl(self):
         #Search for Ensembl id : ENSGXXXXXXXXXXX
         Ensembl_id = []
-        for e in self.xmlHandler.find_all("dbReference", type="Ensembl"):
-            for e_gene_id in e.find_all('property',type='gene ID'):
-                if e_gene_id["value"] not in Ensembl_id:
-                    Ensembl_id.append(e_gene_id["value"])
+        for e in self._xmlFindAll("dbReference", type="Ensembl"):
+            for e_gene_id in self._xmlFindAll('property', elem=e, type='gene ID'):
+                id_ = self._xmlAttrib('value', elem=e_gene_id)
+                if id_ not in Ensembl_id:
+                    Ensembl_id.append(id_)
         return Ensembl_id
         
     def parseGeneID(self):
         GeneID= []
-        for e_gene_id in self.xmlHandler.find_all("dbReference", type="GeneID"):
-            if e_gene_id["id"] not in GeneID:
-                GeneID.append(e_gene_id["id"])
+        for e_gene_id in self._xmlFindAll("dbReference", type="GeneID"):
+            id_ = self._xmlAttrib('id', elem=e_gene_id)
+            if id_ not in GeneID:
+                GeneID.append(id_)
         return GeneID
         
     def get_xref(self):
